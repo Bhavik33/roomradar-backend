@@ -16,22 +16,32 @@ const registerUser = async (req, res) => {
   try {
     const userExists = await User.findOne({ email });
 
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    if (userExists && userExists.isVerified) {
+      return res.status(400).json({ message: 'User already exists and is verified. Please log in.' });
     }
 
     const otpCode = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      otp: {
-        code: otpCode,
-        expiresAt: otpExpires,
-      },
-    });
+    let user;
+    if (userExists) {
+      // Update existing unverified user
+      userExists.name = name;
+      userExists.password = password;
+      userExists.otp = { code: otpCode, expiresAt: otpExpires };
+      user = await userExists.save();
+    } else {
+      // Create new user
+      user = await User.create({
+        name,
+        email,
+        password,
+        otp: {
+          code: otpCode,
+          expiresAt: otpExpires,
+        },
+      });
+    }
 
     if (user) {
       // Send real OTP email
