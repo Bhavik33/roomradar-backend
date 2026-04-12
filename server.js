@@ -29,6 +29,17 @@ app.get('/', (req, res) => {
   res.send('RoomRadar API is running...');
 });
 
+// Temporary debug route - remove after fixing
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const users = await User.find({}, 'email name createdAt');
+    res.json({ count: users.length, users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Database Connection
 const connectDB = async () => {
   try {
@@ -48,6 +59,16 @@ app.use('/api/properties', require('./routes/propertyRoutes'));
 app.use('/api/roommates', require('./routes/roommateRoutes'));
 app.use('/api/chats', require('./routes/chatRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+
+// Serve frontend in production and handle client-side routing
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+  app.use(express.static(frontendPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 5000;
 
