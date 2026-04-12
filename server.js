@@ -29,25 +29,16 @@ app.get('/', (req, res) => {
   res.send('RoomRadar API is running...');
 });
 
-// Temporary debug route - remove after fixing
-app.get('/api/debug/users', async (req, res) => {
-  try {
-    const User = require('./models/User');
-    const users = await User.find({}, 'email name createdAt');
-    res.json({ count: users.length, users });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Database Connection
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB Connected Successfully');
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
     console.error('MongoDB Connection Error:', err.message);
-    process.exit(1);
+    console.log('Retrying connection in 5 seconds...');
+    setTimeout(connectDB, 5000);
   }
 };
 
@@ -65,7 +56,7 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendPath));
 
-  app.get('*', (req, res) => {
+  app.get(/.*/, (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
