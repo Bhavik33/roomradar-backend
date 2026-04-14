@@ -7,6 +7,14 @@ const path = require('path');
 // Load environment variables
 dotenv.config();
 
+// Environment Validation
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+const missingEnv = requiredEnv.filter(env => !process.env[env]);
+if (missingEnv.length > 0) {
+  console.error('❌ CRITICAL ERROR: Missing environment variables:', missingEnv.join(', '));
+  console.error('Please set these variables in your deployment dashboard.');
+}
+
 const app = express();
 
 // Middleware
@@ -20,14 +28,19 @@ console.log('-------------------------');
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+    // Normalize origins by removing trailing slashes
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const isAllowed = allowedOrigins.some(ao => ao === normalizedOrigin);
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`CORS blocked request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`🔒 CORS blocked request from origin: ${origin}`);
+      // Send a successful callback but CORS headers will be missing for this origin
+      // This prevents some server-side proxy crashes compared to passing an Error()
+      callback(null, false);
     }
   },
   credentials: true
@@ -122,5 +135,14 @@ io.on('connection', (socket) => {
     console.log('Client disconnected');
     onlineUsers = onlineUsers.filter(user => user.socketId !== socket.id);
     io.emit('getUsers', onlineUsers);
+  });
+});
+
+// Global Error Handler (Last middleware)
+app.use((err, req, res, next) => {
+  console.error('🔥 UNHANDLED ERROR:', err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
   });
 });

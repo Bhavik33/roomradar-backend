@@ -14,7 +14,9 @@ const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    console.log(`Starting registration for: ${email}`);
     const userExists = await User.findOne({ email });
+    console.log(`User query complete. Exists: ${!!userExists}`);
 
     if (userExists && userExists.isVerified) {
       return res.status(400).json({ message: 'User already exists and is verified. Please log in.' });
@@ -25,13 +27,13 @@ const registerUser = async (req, res) => {
 
     let user;
     if (userExists) {
-      // Update existing unverified user
+      console.log('Updating existing unverified user...');
       userExists.name = name;
       userExists.password = password;
       userExists.otp = { code: otpCode, expiresAt: otpExpires };
       user = await userExists.save();
     } else {
-      // Create new user
+      console.log('Creating new user record...');
       user = await User.create({
         name,
         email,
@@ -42,23 +44,26 @@ const registerUser = async (req, res) => {
         },
       });
     }
+    console.log(`User record saved successfully: ${user._id}`);
 
     if (user) {
       // Send real OTP email
-      console.log(`Starting OTP email delivery to: ${user.email}`);
+      console.log(`🚀 Attempting OTP email delivery to: ${user.email}`);
       const emailStart = Date.now();
       await sendOTPEmail(user.email, otpCode, user.name);
       const emailEnd = Date.now();
-      console.log(`✅ OTP email delivered in ${emailEnd - emailStart}ms`);
+      console.log(`✅ OTP email delivery finished in ${emailEnd - emailStart}ms`);
       
       res.status(201).json({
         message: 'Registration successful. OTP sent to email.',
         email: user.email,
       });
     } else {
+      console.error('Failed to create user object');
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
+    console.error('🔥 Registration Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
