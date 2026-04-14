@@ -45,7 +45,11 @@ const registerUser = async (req, res) => {
 
     if (user) {
       // Send real OTP email
+      console.log(`Starting OTP email delivery to: ${user.email}`);
+      const emailStart = Date.now();
       await sendOTPEmail(user.email, otpCode, user.name);
+      const emailEnd = Date.now();
+      console.log(`✅ OTP email delivered in ${emailEnd - emailStart}ms`);
       
       res.status(201).json({
         message: 'Registration successful. OTP sent to email.',
