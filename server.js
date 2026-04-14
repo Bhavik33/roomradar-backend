@@ -10,12 +10,23 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const allowedOrigins = [process.env.CLIENT_URL || 'http://localhost:5173'];
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : 'http://localhost:5173';
+const allowedOrigins = [clientUrl, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
+
+console.log('--- Environment Check ---');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Allowed Origins:', allowedOrigins);
+console.log('-------------------------');
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
       callback(null, true);
     } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -24,7 +35,16 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Basic Route
+// Health Check & Basic Route
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 app.get('/', (req, res) => {
   res.send('RoomRadar API is running...');
 });
@@ -34,9 +54,9 @@ app.get('/', (req, res) => {
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
-    console.error('MongoDB Connection Error:', err.message);
+    console.error('❌ MongoDB Connection Error:', err.message);
     console.log('Retrying connection in 5 seconds...');
     setTimeout(connectDB, 5000);
   }
