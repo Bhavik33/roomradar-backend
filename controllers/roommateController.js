@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Roommate = require('../models/Roommate');
 
 // Helper function to calculate compatibility score
 const calculateScore = (userPrefs, roommate) => {
@@ -66,7 +67,7 @@ const getRoommates = async (req, res) => {
     let userPrefs = null;
     if (req.user) {
       const currentUser = await User.findById(req.user._id);
-      userPrefs = currentUser.preferences;
+      userPrefs = currentUser?.preferences || null;
     }
 
     const roommatesWithScores = roommates.map(r => {
