@@ -43,4 +43,26 @@ const getFavorites = async (req, res) => {
   }
 };
 
-module.exports = { togglePropertyFavorite, getFavorites };
+// @desc    Update user preferences
+// @route   PUT /api/users/preferences
+// @access  Private
+const updatePreferences = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.preferences = {
+      ...user.preferences,
+      ...req.body
+    };
+
+    await user.save();
+    res.json(user.preferences);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { togglePropertyFavorite, getFavorites, updatePreferences };

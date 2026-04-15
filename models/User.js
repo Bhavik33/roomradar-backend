@@ -27,8 +27,13 @@ const userSchema = new mongoose.Schema({
   preferences: {
     gender: { type: String },
     budget: { type: Number },
-    foodHabits: { type: String },
+    foodHabits: { type: String, enum: ['Veg', 'Non-Veg', 'Any'], default: 'Any' },
     lifestyle: { type: String },
+    cleanliness: { type: Number, min: 1, max: 10, default: 5 },
+    sleepSchedule: { type: String, enum: ['Early Bird', 'Night Owl', 'Flexible'], default: 'Flexible' },
+    smoking: { type: String, enum: ['Yes', 'No', 'Social'], default: 'No' },
+    drinking: { type: String, enum: ['Yes', 'No', 'Social'], default: 'No' },
+    guestPolicy: { type: String, enum: ['Frequent', 'Occasional', 'None'], default: 'Occasional' },
   },
   isVerified: {
     type: Boolean,

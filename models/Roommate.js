@@ -32,8 +32,11 @@ const roommateSchema = new mongoose.Schema({
     default: 'Student',
   },
   habits: {
-    smoking: { type: Boolean, default: false },
-    drinking: { type: Boolean, default: false },
+    smoking: { type: String, enum: ['Yes', 'No', 'Social'], default: 'No' },
+    drinking: { type: String, enum: ['Yes', 'No', 'Social'], default: 'No' },
+    cleanliness: { type: Number, min: 1, max: 10, default: 5 },
+    sleepSchedule: { type: String, enum: ['Early Bird', 'Night Owl', 'Flexible'], default: 'Flexible' },
+    guestPolicy: { type: String, enum: ['Frequent', 'Occasional', 'None'], default: 'Occasional' },
   },
   moveInDate: {
     type: Date,
