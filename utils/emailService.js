@@ -16,14 +16,6 @@ const sendOTPEmail = async (email, otp, userName) => {
     }
   });
 
-  // Verify connection configuration
-  try {
-    await transporter.verify();
-    console.log('✅ SMTP Connection verified successfully');
-  } catch (err) {
-    console.error('❌ SMTP Verification Failed:', err);
-  }
-
   const mailOptions = {
     from: process.env.SMTP_FROM,
     to: email,
