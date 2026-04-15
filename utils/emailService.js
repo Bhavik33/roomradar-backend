@@ -1,15 +1,28 @@
 const nodemailer = require('nodemailer');
 
 const sendOTPEmail = async (email, otp, userName) => {
+  console.log(`📧 Preparing to send OTP to: ${email}`);
+  
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secure: false, // true for 465, false for other ports
+    secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: {
+      rejectUnauthorized: false // Helps with some shared hosting/firewall issues
+    }
   });
+
+  // Verify connection configuration
+  try {
+    await transporter.verify();
+    console.log('✅ SMTP Connection verified successfully');
+  } catch (err) {
+    console.error('❌ SMTP Verification Failed:', err);
+  }
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
@@ -46,10 +59,15 @@ const sendOTPEmail = async (email, otp, userName) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('Message sent: %s', info.messageId);
+    console.log('🚀 Message sent successfully! ID: %s', info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('🔥 SMTP Error during sendMail:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
     return false;
   }
 };
