@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -17,13 +16,6 @@ if (missingEnv.length > 0) {
 }
 
 const app = express();
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-  console.log('📁 Created uploads directory');
-}
 
 // Middleware
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : 'http://localhost:5173';
@@ -76,7 +68,6 @@ app.use('/api/properties', require('./routes/propertyRoutes'));
 app.use('/api/roommates', require('./routes/roommateRoutes'));
 app.use('/api/chats', require('./routes/chatRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Serve frontend in production and handle client-side routing
 if (process.env.NODE_ENV === 'production') {
