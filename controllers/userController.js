@@ -19,7 +19,7 @@ const togglePropertyFavorite = async (req, res) => {
     }
 
     await user.save();
-    res.json({ favorites: user.favoriteProperties, isFavorite: !isFavorite });
+    res.json({ favoriteProperties: user.favoriteProperties, isFavorite: !isFavorite });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -35,8 +35,8 @@ const getFavorites = async (req, res) => {
       .populate('favoriteRoommates');
     
     res.json({
-      properties: user.favoriteProperties,
-      roommates: user.favoriteRoommates
+      favoriteProperties: user.favoriteProperties,
+      favoriteRoommates: user.favoriteRoommates
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
