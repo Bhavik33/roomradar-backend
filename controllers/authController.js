@@ -15,12 +15,13 @@ const registerUser = async (req, res) => {
 
   const { name, email, password } = req.body;
 
-  try {
-    console.log(`Starting registration for: ${email}`);
+    console.log(`[1] Starting registration for: ${email}`);
+    const dbStartTime = Date.now();
     const userExists = await User.findOne({ email });
-    console.log(`User query complete. Exists: ${!!userExists}`);
+    console.log(`[2] User query complete in ${Date.now() - dbStartTime}ms. Exists: ${!!userExists}`);
 
     if (userExists && userExists.isVerified) {
+      console.log(`[3] User already exists and is verified.`);
       return res.status(400).json({ message: 'User already exists and is verified. Please log in.' });
     }
 
@@ -29,13 +30,13 @@ const registerUser = async (req, res) => {
 
     let user;
     if (userExists) {
-      console.log('Updating existing unverified user...');
+      console.log('[4] Updating existing unverified user...');
       userExists.name = name;
       userExists.password = password;
       userExists.otp = { code: otpCode, expiresAt: otpExpires };
       user = await userExists.save();
     } else {
-      console.log('Creating new user record...');
+      console.log('[4] Creating new user record...');
       user = await User.create({
         name,
         email,
@@ -46,27 +47,39 @@ const registerUser = async (req, res) => {
         },
       });
     }
-    console.log(`User record saved successfully: ${user._id}`);
+    console.log(`[5] User record saved successfully: ${user._id}`);
 
     if (user) {
       // Send real OTP email
-      console.log(`🚀 Attempting OTP email delivery to: ${user.email}`);
+      console.log(`[6] 🚀 Attempting OTP email delivery to: ${user.email}`);
       const emailStart = Date.now();
-      await sendOTPEmail(user.email, otpCode, user.name);
-      const emailEnd = Date.now();
-      console.log(`✅ OTP email delivery finished in ${emailEnd - emailStart}ms`);
       
+      // TEMPORARY: Adding a 10s timeout to the email send to prevent infinite hang
+      const emailPromise = sendOTPEmail(user.email, otpCode, user.name);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout')), 10000));
+      
+      try {
+        await Promise.race([emailPromise, timeoutPromise]);
+        console.log(`[7] ✅ OTP email delivery finished in ${Date.now() - emailStart}ms`);
+      } catch (emailErr) {
+        console.warn(`[7] ⚠️ Email delivery issue: ${emailErr.message}`);
+        // We continue anyway so the user gets a response, even if the email is slow/failing
+      }
+      
+      console.log(`[8] Sending 201 response to client`);
       res.status(201).json({
         message: 'Registration successful. OTP sent to email.',
         email: user.email,
       });
     } else {
-      console.error('Failed to create user object');
+      console.error('[!] Failed to create user object');
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    console.error('🔥 Registration Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('🔥 [FATAL] Registration Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: error.message });
+    }
   }
 };
 

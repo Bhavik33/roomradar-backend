@@ -13,7 +13,10 @@ const sendOTPEmail = async (email, otp, userName) => {
     },
     tls: {
       rejectUnauthorized: false // Helps with some shared hosting/firewall issues
-    }
+    },
+    connectionTimeout: 5000, // 5 seconds
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
   });
 
   const mailOptions = {
