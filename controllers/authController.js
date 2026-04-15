@@ -15,6 +15,7 @@ const registerUser = async (req, res) => {
 
   const { name, email, password } = req.body;
 
+  try {
     console.log(`[1] Starting registration for: ${email}`);
     const dbStartTime = Date.now();
     const userExists = await User.findOne({ email });
