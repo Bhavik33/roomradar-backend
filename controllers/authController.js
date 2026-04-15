@@ -11,6 +11,9 @@ const generateOTP = () => {
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
+  console.log("Register route hit"); // Step 1: Entry log
+  return res.send("OK"); // Step 2: Timeout test (Bypasses logic to test connectivity)
+
   const { name, email, password } = req.body;
 
   try {

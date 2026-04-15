@@ -27,22 +27,7 @@ console.log('Allowed Origins:', allowedOrigins);
 console.log('-------------------------');
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    
-    // Normalize origins by removing trailing slashes
-    const normalizedOrigin = origin.replace(/\/$/, '');
-    const isAllowed = allowedOrigins.some(ao => ao === normalizedOrigin);
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`🔒 CORS blocked request from origin: ${origin}`);
-      // Send a successful callback but CORS headers will be missing for this origin
-      // This prevents some server-side proxy crashes compared to passing an Error()
-      callback(null, false);
-    }
-  },
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
@@ -103,7 +88,7 @@ const server = app.listen(PORT, () => {
 // Socket.io Setup
 const io = require('socket.io')(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true
   }
